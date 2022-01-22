@@ -2,7 +2,7 @@ clear all
 close all
 
 v=5;                    % constant speed
-ws= deg2rad(-0.02);        % steering wheel turning speed rad/s
+ws= deg2rad(1);        % steering wheel turning speed rad/s
 theta(1)=0;             % initial car angle
 phi(1)=0;               % initial steering wheel angle
 L=2.2;
@@ -19,7 +19,7 @@ y_real(1) = 0;
 x_r(1) = 0;
 y_r(1) = 0;
 
-for i=1:200
+for i=1:320
     if (i < 50) || (i > 150) 
         [x(i),y(i),x_real(i),y_real(i)]=gps_estimation(x(i),y(i),x_real(i),y_real(i));
         [x_var, y_var, theta_var, phi_var]=model(v,ws,theta(i),phi(i));
