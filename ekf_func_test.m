@@ -1,5 +1,5 @@
 clear;
-close all
+%close all
 
 x(1) = 0;
 y(1) = 0;
