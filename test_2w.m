@@ -23,7 +23,7 @@ Q = 0.001*[1 0 0
 
 R = 0.5*[1 0 0
         0 1 0
-        0 0 0.1];
+        0 0 0.01];
 
 x_measured(1) = x(1);
 y_measured(1) = y(1);
@@ -49,15 +49,21 @@ for i=1:400
         %x_vec_meas = A*[x_real; y_real; theta(1); phi(1)] + [cos(x_vec_real(3)), 0; sin(x_vec_real(3)), 0; (tan(x_vec_real(4)))/L, 0; 0, 1]*u_vec;
         %x_vec_meas = A*x_vec_real + B_real*u_vec;
         
-        theta_measured(i) = x_vec_est(3)+ randn(1)*0.01;
+        %theta_measured(i) = x_vec_est(3)+ randn(1)*0.001;
+        theta_measured(i) = x_vec_est(3);
         %theta_measured(i+1) = x_vec_real(3)+ randn(1)*0.001;
         
         %phi_measured(i+1) = x_vec_real(4)+ randn(1)*0.001;
     else
-        x_vec_meas = A*x_vec_real + B_real*u_vec;
-        x_measured(i) = x_vec_meas(1)+ randn(1)*0.1;
-        y_measured(i) = x_vec_meas(2)+ randn(1)*0.1;
-        theta_measured(i) = x_vec_meas(3)+ randn(1)*0.01;
+        x_vec_meas = A*est_vec + B_est*u_vec;
+        %x_measured(i) = x_vec_meas(1)+ randn(1)*0.1;
+        %y_measured(i) = x_vec_meas(2)+ randn(1)*0.1;
+        %theta_measured(i) = x_vec_meas(3)+ randn(1)*0.01;
+        
+        x_measured(i) = x_vec_meas(1);
+        y_measured(i) = x_vec_meas(2);
+        theta_measured(i) = x_vec_meas(3);
+    
         %phi_measured(i+1) = x_vec_meas(4)+ randn(1)*0.001;
     end
     %if (i > 50) && (i <= 100)
