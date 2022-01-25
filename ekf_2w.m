@@ -39,11 +39,17 @@ P = (eye(3)-K*H)*P;
 x = x_est_vec(1);
 y = x_est_vec(2);
 
-if (abs(x_est_vec(3)) < 45)
-    theta = x_est_vec(3);
-else
-    theta = theta_prev;
-end
+
+% CHANGE THIS TO LIMIT THETA (OR NOT IF WE WANT TO KEEP IT THIS WAY)
+% if (abs(x_est_vec(3)) < 45)
+     theta = x_est_vec(3);
+% else
+%     theta = theta_prev;
+% end
+
+
+
+
 
 % if (abs(x_est_vec(4)) < 45)
 %     phi = x_est_vec(4);
