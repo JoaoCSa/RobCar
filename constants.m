@@ -15,5 +15,7 @@ Kb = 0.06; % back emf constant
 J = 1000; % momento de inercia
 
 % PID 
-kp = 100; 
-ki = 0;
+kp = 38.15; 
+ki = 66.99;
+kd = 4.377;
+N = 18.3;
