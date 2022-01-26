@@ -14,7 +14,7 @@ d = 0.64;
 r = 0.256;
 
 %% wheel angular speed calculations
-omega_s(1) = deg2rad(5);
+omega_s(1) = deg2rad(0.005);
 %omega_s(1) = deg2rad(0.0);
 
 omega_l(1) = -d*omega_s(1)/r+V/r;
@@ -109,9 +109,9 @@ for i=1:400
     
     %% update omega_s, omega_l, omega_r
     
-    omega_s(i+1) = omega_s(1)*cos((i*8)*pi/180);
-    %omega_s(i+1) = omega_s(i);
-    %omega_s = cos(2*pi/(320/2)*i)*0.000;
+    %omega_s(i+1) = omega_s(1)*cos((i*8)*pi/180);
+    omega_s(i+1) = omega_s(i);
+    %omega_s(i+1) = cos(2*pi/(320/2)*i)*0.05;
 
     % omega_l(i+1) = -d*omega_s(i+1)/r+V/r;
     % omega_r(i+1) = 2*V/r - omega_l(i+1);
