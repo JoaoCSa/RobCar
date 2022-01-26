@@ -1,8 +1,5 @@
 classdef navigation < matlab.System
-    % Untitled Add summary here
-    %
-    % This template includes the minimum set of functions required
-    % to define a System object with discrete state.
+    % Navigation block with ekf estimation
 
     % Public, tunable properties
     properties
@@ -14,8 +11,6 @@ classdef navigation < matlab.System
     end
 
     properties(DiscreteState)
-        %x_vec_real;             % initial state
-        %x_vec_real_2;           % initial state
         
         est_vec;
         B_est;
@@ -40,13 +35,10 @@ classdef navigation < matlab.System
     methods(Access = protected)
         function setupImpl(obj)
             % Perform one-time calculations, such as computing constants
-            %obj.A = eye(3);
-            %obj.B = []
+
             obj.prev_x=obj.initial_x;
             obj.prev_y=obj.initial_y;
             obj.prev_theta=obj.initial_theta;
-            
-            %obj.x_vec_real_2 = [obj.initial_x; obj.initial_y; obj.initial_theta];
             
             obj.est_vec = [0;0;0];
             obj.B_est = [cos(obj.initial_theta), 0; sin(obj.initial_theta), 0; 0, 1];
@@ -74,55 +66,17 @@ classdef navigation < matlab.System
             if GPS == 1
                 % with GPS and wheel odometry
                 [x_measured, y_measured, out1, out2] = gps_estimation(x_real, y_real, x_real, y_real);
-                
-                
-                theta_measured = obj.prev_theta + ((omega_r-omega_l)*obj.r)/(2*obj.d);
-                
-%                 obj.prev_x = obj.prev_x + 1;
-%                 obj.prev_y = obj.prev_y + 1;
-%                 obj.prev_theta = obj.prev_theta + 1;
-%                 x = obj.prev_x;
-%                 y = obj.prev_y;
-%                 theta = obj.prev_theta;
-%                 z = obj.prev_x;
-%                 
+                   
+                theta_measured = obj.prev_theta + ((omega_r-omega_l)*obj.r)/(2*obj.d);        
             else
                 % w/o GPS, kinematic model and odometry
                 x_vec_meas = obj.A*obj.est_vec + obj.B_est*u_vec;
                 x_measured = x_vec_meas(1);
                 y_measured = x_vec_meas(2);
                 
-                %theta_measured = x_vec_real_2(3)+ randn(1)*0.001;
-                
                 theta_measured = obj.prev_theta + ((omega_r-omega_l)*obj.r)/(2*obj.d);
-               
-                
-                %theta_measured(i) = x_vec_real_2(3);
             end
             
-            %obj.x_vec_real = [x_real,y_real,V];
-            %obj.x_vec_real_2 = [obj.x,obj.y,obj.theta];
-
-            %% Real values
-    
-%             B_real = [cos(x_vec_real(3)), 0; sin(x_vec_real(3)), 0; 0, 1];
-%             u_vec = [V; omega_s(i)];
-% 
-%             x_vec_real = obj.A*x_vec_real + B_real*u_vec;
-%             x_real(i+1) = x_vec_real(1);
-%             y_real(i+1) = x_vec_real(2);
-%             theta_real(i+1) = x_vec_real(3);
-%             %phi_real(i+1) = x_vec_real(4);
-
-            %% Real values to test w_l and w_r
-
-%             B_real_2 = [cos(theta_real_2(i)), 0; sin(theta_real_2(i)), 0; 0, 1];
-%             u_vec_2 = [V; ((omega_r(i)-omega_l(i))*r)/(2*d)];
-% 
-%             obj.x_vec_real_2 = obj.A*obj.x_vec_real_2 + B_real_2*u_vec_2;
-%             x_real_2(i+1) = x_vec_real_2(1);
-%             y_real_2(i+1) = x_vec_real_2(2);
-%             theta_real_2(i+1) = x_vec_real_2(3);
             
             %% EKF estimation
             [x, y, theta, obj.P] = ekf_2w(obj.prev_x, obj.prev_y, obj.prev_theta, V, omega_s, obj.L, obj.P, x_measured, y_measured, theta_measured, obj.Q, obj.R);
@@ -135,7 +89,6 @@ classdef navigation < matlab.System
             obj.prev_x = x;
             obj.prev_y = y;
             obj.prev_theta = theta;
-            %y = u;
         end
 
         function resetImpl(obj)
