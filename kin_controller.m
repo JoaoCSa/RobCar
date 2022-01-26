@@ -85,7 +85,7 @@ classdef kin_controller < matlab.System
             err = zeros(size(phid));
 
             t_best = abs(error_p) > abs(error_t);
-            p_best = logical(bitxor(t_best,1));
+            p_best = logical(bitxor(double(t_best),1));
 
             err(t_best) = error_t(t_best);
             err(p_best) = error_p(p_best);
@@ -95,6 +95,7 @@ classdef kin_controller < matlab.System
             R = @(theta) [cos(theta),sin(theta),0;-sin(theta),cos(theta),0;0,0,1];
             theta = q(3);
             ep = (qd - q)';
+            ep(3) = obj.angle_error(qd(3),q(3));
             err = R(theta)*ep;
         end
 
@@ -128,7 +129,7 @@ classdef kin_controller < matlab.System
             % Perform one-time calculations, such as computing constants
         end
 
-        function [v,omega] = stepImpl(obj,time)
+        function [v,omega] = stepImpl(obj,x,y,theta)
             % Implement algorithm. Calculate y as a function of input u and
             % discrete states.
 
@@ -140,10 +141,11 @@ classdef kin_controller < matlab.System
                 err = obj.local_error(obj.q_est,q_ref);
                 u = obj.feedback_vel(omegad,vd,err);
                 v = u(1);
-                omega = u(2);
+                omega = u(2)
                 obj.ii = obj.ii + 1;
                 % Estimate next state
                 obj.q_est = obj.q_est + obj.kin_model(u(2),u(1),obj.q_est(3),obj.T);
+                obj.q_est(3) = obj.normalize_angle(obj.q_est(3));
             else
                 v = 0;
                 omega = 0;
