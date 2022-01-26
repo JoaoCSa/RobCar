@@ -19,3 +19,6 @@ kp = 38.15;
 ki = 66.99;
 kd = 4.377;
 N = 18.3;
+
+trajectory = load('reference_tracking/new_traj.mat');
+T = trajectory.tSamples(2);
