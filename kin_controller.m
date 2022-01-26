@@ -9,6 +9,7 @@ classdef kin_controller < matlab.System
         traj = struct
         OffsetTime = 0.0 % Offset Time
         SampleTime = 0.1 % Sample Time
+        KinematicModel = false;
     end
 
     properties(DiscreteState)
@@ -100,8 +101,8 @@ classdef kin_controller < matlab.System
         end
 
         function u = feedback_vel(obj,omegad,vd,err)
-            Zeta = 0.9;
-            g = 0.1;
+            Zeta = 0.99;
+            g = 32*0.0005;
 
             omega_n = sqrt(omegad^2 + g*vd^2);
             k1 = 2*Zeta*omega_n;
@@ -132,6 +133,13 @@ classdef kin_controller < matlab.System
         function [v,omega] = stepImpl(obj,x,y,theta)
             % Implement algorithm. Calculate y as a function of input u and
             % discrete states.
+            
+            % disp(size(x))
+            % disp(size(obj.q_est(1)))
+            if not(obj.KinematicModel)
+                theta = obj.normalize_angle(theta);
+                obj.q_est = [x,y,theta];
+            end
 
             if (obj.ii < obj.N)
                 omegad = obj.OMEGAD(obj.ii);
@@ -141,11 +149,16 @@ classdef kin_controller < matlab.System
                 err = obj.local_error(obj.q_est,q_ref);
                 u = obj.feedback_vel(omegad,vd,err);
                 v = u(1);
-                omega = u(2)
+                omega = u(2);
                 obj.ii = obj.ii + 1;
-                % Estimate next state
-                obj.q_est = obj.q_est + obj.kin_model(u(2),u(1),obj.q_est(3),obj.T);
-                obj.q_est(3) = obj.normalize_angle(obj.q_est(3));
+
+                % Estimate next state if using the kinematic model
+                if obj.KinematicModel
+                    obj.q_est = obj.q_est + obj.kin_model(u(2),u(1),obj.q_est(3),obj.T);
+                    obj.q_est(3) = obj.normalize_angle(obj.q_est(3));
+                else
+                    obj.q_est = [0,0,0];
+                end
             else
                 v = 0;
                 omega = 0;
@@ -159,7 +172,7 @@ classdef kin_controller < matlab.System
         end
 
         function sts = getSampleTimeImpl(obj)
-            sts = createSampleTime(obj,'Type','Discrete',...
+            sts = createSampleTime(obj,'Type','Discrete', ...
                 'SampleTime',obj.SampleTime, ...
                 'OffsetTime',obj.OffsetTime);
         end
