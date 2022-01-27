@@ -33,7 +33,7 @@ classdef kin_controller < matlab.System
             end
         end
 
-        function [OMEGA,V,THETA] = estimate_state_accel(obj,X_dot,Y_dot,X_dotdot,Y_dotdot,T)
+        function [OMEGA,V,THETA] = estimate_state_accel(obj,X_dot,Y_dot,X_dotdot,Y_dotdot)
             % Given the velocities and accelerations in the XY plane it estimates the angular 
             % and linear velocities of the car
             V_squared = X_dot.^2 + Y_dot.^2;
@@ -41,6 +41,33 @@ classdef kin_controller < matlab.System
             THETA = atan2(Y_dot,X_dot);
             V = sqrt(V_squared);
             OMEGA = (X_dot.*Y_dotdot - Y_dot.*X_dotdot)./V_squared;
+        end
+
+        function [OMEGA,V,THETA] = estimate_state_pos(obj,X,Y,X_dot,Y_dot,T)
+            % Given the velocities and accelerations in the XY plane it estimates the angular 
+            % and linear velocities of the car
+            jj = 1;
+            kk = 1;
+
+            X1 = X(1:end - jj);
+            X2 = X(jj + 1:end);
+
+            Y1 = Y(1:end - jj);
+            Y2 = Y(jj + 1:end);
+            
+            THETA = atan2(Y2 - Y1,X2 - X1);
+
+            THETA1 = THETA(1:end - kk);
+            THETA2 = THETA(kk + 1:end);
+
+            OMEGA = (THETA2 - THETA1)/(kk*T);
+
+
+            V_squared = X_dot.^2 + Y_dot.^2;
+            V_squared = V_squared(1:length(OMEGA));
+
+            V = sqrt(V_squared);
+            V = V(1:length(OMEGA));
         end
 
         function q_dot = kin_model(obj,omega,v,theta,T)
@@ -121,6 +148,7 @@ classdef kin_controller < matlab.System
             uB = Ks*err;
             uF = [vd*cos(err(3));omegad];
             u = uB + uF;
+            %u = [vd;omegad];
         end
 
     end
@@ -132,8 +160,11 @@ classdef kin_controller < matlab.System
             obj.ii = 1;
             obj.T = obj.traj.tSamples(2);
             %obj.SampleTime = obj.T;
-            obj.N = length(obj.traj.tSamples);
-            [obj.OMEGAD, obj.VD, obj.THETAD] = obj.estimate_state_accel(obj.traj.qd(1,:),obj.traj.qd(2,:),obj.traj.qdd(1,:),obj.traj.qdd(2,:),obj.T);
+            %[obj.OMEGAD, obj.VD, obj.THETAD] = obj.estimate_state_pos( ...
+            %    obj.traj.q(1,:),obj.traj.q(2,:),obj.traj.qd(1,:),obj.traj.qd(2,:),obj.T);
+            [obj.OMEGAD, obj.VD, obj.THETAD] = obj.estimate_state_accel( ...
+                obj.traj.qd(1,:),obj.traj.qd(2,:),obj.traj.qdd(1,:),obj.traj.qdd(2,:));
+            obj.N = length(obj.THETAD);
             obj.THETAD = obj.normalize_angle(obj.THETAD);
             % Give the first estimate
             obj.q_est = [obj.traj.q(1,obj.ii),obj.traj.q(2,obj.ii),obj.THETAD(obj.ii)];
