@@ -14,8 +14,8 @@ d = 0.64;
 r = 0.256;
 
 %% wheel angular speed calculations
-omega_s(1) = deg2rad(0.005);
-%omega_s(1) = deg2rad(0.0);
+%omega_s(1) = deg2rad(5);
+omega_s(1) = deg2rad(0.0);
 
 omega_l(1) = -d*omega_s(1)/r+V/r;
 omega_r(1) = 2*V/r - omega_l(1);
@@ -67,6 +67,11 @@ for i=1:400
         
         [x_measured(i), y_measured(i), x_real(i), y_real(i)] = gps_estimation(x_real(i), y_real(i), x_real(i), y_real(i));
         % theta_measured(i) = x_vec_real_2(3)+ randn(1)*0.001;
+        if i==1
+            y_measured(1) = y_measured(1) + 10; 
+            y(1) = y(1) + 10; %5
+        end
+        
         theta_measured(i) = x_vec_real_2(3);
     
     else
@@ -109,14 +114,14 @@ for i=1:400
     
     %% update omega_s, omega_l, omega_r
     
-    %omega_s(i+1) = omega_s(1)*cos((i*8)*pi/180);
-    omega_s(i+1) = omega_s(i);
+    omega_s(i+1) = omega_s(1)*cos((i*8)*pi/180);
+    %omega_s(i+1) = omega_s(i);
     %omega_s(i+1) = cos(2*pi/(320/2)*i)*0.05;
 
     % omega_l(i+1) = -d*omega_s(i+1)/r+V/r;
     % omega_r(i+1) = 2*V/r - omega_l(i+1);
     omega_l(i+1) = -d*omega_s(i+1)/r+V/r + randn(1)*0.001;
-    omega_r(i+1) = 2*V/r - omega_l(i+1) + randn(1)*0.001;
+    omega_r(i+1) = 2*V/r - omega_l(i+1) + randn(1)*0.001; %0.001
 
     %% plot lines (not relevant)
     if i==150
