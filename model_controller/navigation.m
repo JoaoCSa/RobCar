@@ -126,7 +126,7 @@ classdef navigation < matlab.System
             A = eye(3);
             B = [cos(theta_prev), 0; sin(theta_prev), 0; 0, 1];
 
-            x_vec = A*x_prev_vec + B*u_vec;
+            x_vec = A*x_prev_vec + B*u_vec*obj.SampleTime;
 
             F = [1 0 -V*sin(x_vec(3));
                 0 1 V*cos(x_vec(3));
