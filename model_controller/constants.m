@@ -1,5 +1,5 @@
 
-clear;
+clear out;
 % ENUNCIADO
 m = 810; % massa
 r = 0.256; % raio
@@ -17,13 +17,20 @@ Kb = 0.06; % back emf constant
 J = 0.0025; % momento de inercia
 
 % PID 
-kp = 100; 
+kp = 25;
 ki = 50;
 kd = 0;
 N = 0;
 
-trajectory = load('traj_corr.mat');
+trajectory = load('traj_maluca.mat');
 T = trajectory.tSamples(2);
+%{
+trajectory.q = trajectory.q(:,50:end);
+trajectory.qd = trajectory.qd(:,50:end);
+trajectory.qdd = trajectory.qdd(:,50:end);
+trajectory.tSamples = trajectory.tSamples(:,50:end);
+%}
+
 
 
 cont = kin_controller(trajectory);
@@ -49,3 +56,19 @@ omegadot = (omega1 - omega2)/T;
 
 x_init = trajectory.q(1,1);
 y_init = trajectory.q(2,1);
+
+
+position_noise_mean = 2;
+position_noise_variance = 0.5;
+angular_speed_noise_mean = 0.001;
+angular_speed_noise_variance = 0.5;
+theta_noise_mean = 0.001;
+theta_noise_variance = 0.001;
+
+NoiseSampleTime = 0.00001;
+
+seed1 = 1;
+seed2 = 2;
+seed3 = 3;
+seed4 = 4;
+seed5 = 5;

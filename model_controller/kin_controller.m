@@ -7,6 +7,7 @@ classdef kin_controller < matlab.System
         OffsetTime = 0.0 % Offset Time
         SampleTime = 0.1 % Sample Time
         useKinematicModel = false;
+        useFeedback = true;
     end
 
     properties(DiscreteState)
@@ -36,11 +37,16 @@ classdef kin_controller < matlab.System
         function [OMEGA,V,THETA] = estimate_state_accel(obj,X_dot,Y_dot,X_dotdot,Y_dotdot)
             % Given the velocities and accelerations in the XY plane it estimates the angular 
             % and linear velocities of the car
+            epsilon = 0.1;
+
             V_squared = X_dot.^2 + Y_dot.^2;
 
             THETA = atan2(Y_dot,X_dot);
             V = sqrt(V_squared);
             OMEGA = (X_dot.*Y_dotdot - Y_dot.*X_dotdot)./V_squared;
+            %OMEGA(V < epsilon) = 0;
+            %THETA(V < epsilon) = 0;
+
         end
 
         function [OMEGA,V,THETA] = estimate_state_pos(obj,X,Y,X_dot,Y_dot,T)
@@ -147,8 +153,11 @@ classdef kin_controller < matlab.System
             
             uB = Ks*err;
             uF = [vd*cos(err(3));omegad];
-            u = uB + uF;
-            %u = [vd;omegad];
+            if obj.useFeedback
+                u = uB + uF;
+            else
+                u = [vd;omegad];
+            end
         end
 
     end
