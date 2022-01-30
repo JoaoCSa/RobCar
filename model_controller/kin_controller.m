@@ -158,19 +158,19 @@ classdef kin_controller < matlab.System
             % Uses err to get a better estimate of the linear and angular velocities 
             Zeta = 0.99;
             g = 32*0.0005;
-
+            %g = 0;
             omega_n = sqrt(omegad^2 + g*vd^2);
             k1 = 2*Zeta*omega_n;
-            k2 = g*abs(vd);
+            k2 = 0.25*g*abs(vd);
             k3 = k1;
             
-            Ks = [k1,0,0;0,sign(vd)*k2,k3]; % Gain matrix
-            
+            Ks = [k1,0,0;0,k2,k3]; % Gain matrix
             uB = Ks*err;
             uF = [vd*cos(err(3));omegad];
             if obj.useFeedback
                 u = uB + uF;
                 %u(1) = abs(u(1));
+                u(1) = max(0.2,u(1));
             else
                 u = [vd;omegad];
             end
