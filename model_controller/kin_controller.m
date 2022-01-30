@@ -161,7 +161,7 @@ classdef kin_controller < matlab.System
             %g = 0;
             omega_n = sqrt(omegad^2 + g*vd^2);
             k1 = 2*Zeta*omega_n;
-            k2 = 0.25*g*abs(vd);
+            k2 = 2*g*abs(vd);
             k3 = k1;
             
             Ks = [k1,0,0;0,k2,k3]; % Gain matrix
@@ -170,7 +170,7 @@ classdef kin_controller < matlab.System
             if obj.useFeedback
                 u = uB + uF;
                 %u(1) = abs(u(1));
-                u(1) = max(0.2,u(1));
+                u(1) = max(0,u(1));
             else
                 u = [vd;omegad];
             end

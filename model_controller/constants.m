@@ -17,12 +17,17 @@ Kb = 0.06; % back emf constant
 J = 0.0025; % momento de inercia
 
 % PID 
-kp = 25;
-ki = 50;
+%kp = 50;
+%ki = 100;
+kp = 50;
+ki = 100;
+%ki = 50;
+%kp = 100;
+%ki = 0;
 kd = 0;
 N = 0;
 
-trajectory = load('traj_limites.mat');
+trajectory = load('traj_maluca.mat');
 T = trajectory.tSamples(2);
 %{
 trajectory.q = trajectory.q(:,50:end);
@@ -30,7 +35,8 @@ trajectory.qd = trajectory.qd(:,50:end);
 trajectory.qdd = trajectory.qdd(:,50:end);
 trajectory.tSamples = trajectory.tSamples(:,50:end);
 %}
-
+x_final = trajectory.q(1,end)
+y_final = trajectory.q(2,end)
 
 
 cont = kin_controller(trajectory);
