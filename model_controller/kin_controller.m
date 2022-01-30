@@ -37,14 +37,29 @@ classdef kin_controller < matlab.System
         function [OMEGA,V,THETA] = estimate_state_accel(obj,X_dot,Y_dot,X_dotdot,Y_dotdot)
             % Given the velocities and accelerations in the XY plane it estimates the angular 
             % and linear velocities of the car
-            epsilon = 0.1;
+            epsilon = 0.001;
 
             V_squared = X_dot.^2 + Y_dot.^2;
 
-            THETA = atan2(Y_dot,X_dot);
             V = sqrt(V_squared);
             OMEGA = (X_dot.*Y_dotdot - Y_dot.*X_dotdot)./V_squared;
-            %OMEGA(V < epsilon) = 0;
+            OMEGA(V < epsilon) = 0;
+
+            THETA = zeros(size(X_dot));
+            for ii = (2:length(X_dot))
+                THETA(ii) = atan2(Y_dot(ii),X_dot(ii));
+                if V(ii) < epsilon
+                    THETA(ii) = THETA(ii - 1);
+                end
+            end
+
+            for ii = (length(X_dot) - 1:-1:1)
+                THETA(ii) = atan2(Y_dot(ii),X_dot(ii));
+                if V(ii) < epsilon
+                    THETA(ii) = THETA(ii + 1);
+                end
+            end
+
             %THETA(V < epsilon) = 0;
 
         end
@@ -155,6 +170,7 @@ classdef kin_controller < matlab.System
             uF = [vd*cos(err(3));omegad];
             if obj.useFeedback
                 u = uB + uF;
+                %u(1) = abs(u(1));
             else
                 u = [vd;omegad];
             end
@@ -181,7 +197,7 @@ classdef kin_controller < matlab.System
             sts = getSampleTime(obj);
         end
 
-        function [v,omega] = stepImpl(obj,x,y,theta)
+        function [v,omega,xd,yd] = stepImpl(obj,x,y,theta)
             % This function is executed at each time step defined previously
             % As long as there's a path it tries to follow it as close as possible
             % When the path ends it just set the angular and linear velocities to zero
@@ -214,10 +230,15 @@ classdef kin_controller < matlab.System
                 else
                     obj.q_est = [0,0,0];
                 end
+                xd = q_ref(1);
+                yd = q_ref(2);
             else
                 % Set the velocities to zero
+                q_ref = [obj.traj.q(:,obj.ii).',obj.THETAD(obj.ii)];
                 v = 0;
                 omega = 0;
+                xd = q_ref(1);
+                yd = q_ref(2);
             end
         end
 

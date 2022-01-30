@@ -22,7 +22,7 @@ ki = 50;
 kd = 0;
 N = 0;
 
-trajectory = load('traj_maluca.mat');
+trajectory = load('traj_limites.mat');
 T = trajectory.tSamples(2);
 %{
 trajectory.q = trajectory.q(:,50:end);
