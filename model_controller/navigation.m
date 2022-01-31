@@ -58,38 +58,47 @@ classdef navigation < matlab.System
 
         end
 
-        function [x,y,theta,x_measured,y_measured] = stepImpl(obj,theta_measured,omega_r,omega_l,x_real,y_real,GPS,V)
-            % Implement algorithm. Calculate y as a function of input u and
-            % discrete states.
+        function [x,y,theta,x_measured,y_measured, theta_out, theta_out_t] = stepImpl(obj,theta_measured,omega_r,omega_l,x_real,y_real,GPS,V,omega_s_t)
+            % Navigation algorithm
             
-            
-            %% update omega_l, omega_r
+            %% Update omega_l, omega_r
             %omega_l = -obj.d*omega_s/obj.r+V/obj.r + randn(1)*b;
             %omega_r = 2*V/obj.r - omega_l + randn(1)*b;
             
             %omega_l_noise = omega_l + randn(1)*obj.angular_speed_noise;
             %omega_r_noise = omega_r + randn(1)*obj.angular_speed_noise;
+            
+            %% This was used to test the calculation of theta
+            
             omega_l_noise = omega_l + randn(1)*0;
             omega_r_noise = omega_r + randn(1)*0;
             omega_s = ((omega_r_noise - omega_l_noise)*obj.r)/(2*obj.d);
-
+            theta_out = obj.prev_theta + omega_s*obj.SampleTime; 
+            theta_out_t = obj.prev_theta + omega_s_t*obj.SampleTime;
+            
+            %% Control input
             %V = (omega_r_noise + omega_l_noise)*obj.r/2;
             u_vec = [V; omega_s];
+            
             %% obtain measurements
             if GPS == 1
                 % with GPS and wheel odometry
                 [x_measured, y_measured, out1, out2] = obj.gps_estimation(x_real, y_real, x_real, y_real);
                 
                 theta_measured = theta_measured + obj.orientation_noise*randn(1);
-                %theta_measured = obj.prev_theta + omega_s*obj.SampleTime;      
+                %theta_measured = obj.prev_theta + omega_s_t*obj.SampleTime;  
             else
                 % w/o GPS, kinematic model and odometry
                 x_vec_meas = obj.A*obj.est_vec + obj.B_est*u_vec*obj.SampleTime;
                 x_measured = x_vec_meas(1);
                 y_measured = x_vec_meas(2);
                 
-                %theta_measured = obj.prev_theta + omega_s*obj.SampleTime;
+                %theta_measured = obj.prev_theta + omega_s*obj.SampleTime; % ignore this theta
+               
+                
                 theta_measured = theta_measured + obj.orientation_noise*randn(1);
+                %theta_measured = obj.prev_theta + omega_s_t*obj.SampleTime;  
+            
             end
             
             %% EKF estimation

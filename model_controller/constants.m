@@ -24,10 +24,10 @@ N = 0;
 
 trajectory = load('traj_corr.mat');
 T = trajectory.tSamples(2);
-oc_matx = load('map_navigation.mat');
-green = transpose(oc_matx.green_coord)
-green_x = timeseries(green(:,1));
-green_y = timeseries(green(:,2));
+oc_matx = load('oc_matrix.mat');
+% green = transpose(oc_matx.green_coord);
+% green_x = timeseries(green(:,1));
+% green_y = timeseries(green(:,2));
 
 
 cont = kin_controller(trajectory);
