@@ -169,7 +169,7 @@ classdef kin_controller < matlab.System
             uF = [vd*cos(err(3));omegad];
             if obj.useFeedback
                 u = uB + uF;
-                %u(1) = abs(u(1));
+                %u(1) = abs(u(1))
                 u(1) = max(0,u(1));
             else
                 u = [vd;omegad];

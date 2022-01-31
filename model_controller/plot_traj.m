@@ -3,6 +3,10 @@ if exist('fig','var')
 		clf(fig(ii));
 	end
 end
+%constants;
+%out = sim('car_model_with_controller_2020a.slx');
+
+
 fig = [];
 fig = [fig;figure(1)];
 hold on;
@@ -12,7 +16,7 @@ title('Path Following');
 xlabel('x (m)');
 ylabel('y (m)');
 legend('reference','trajectory');
-axis equal;
+%axis equal;
 hold off;
 
 points1 = round(linspace(1,length(trajectory.tSamples),1000));
@@ -48,3 +52,22 @@ xlabel('Time (s)');
 ylabel('Velocity (m/s)');
 legend('reference','simulated');
 hold off;
+
+fig = [fig;figure(5)];
+plot(out.Energy.Time,out.Energy.Data);
+title('Total Used Energy ');
+xlabel('Time (s)');
+ylabel('Energy (J)');
+
+
+
+map_campus = open('map_campus.mat');
+fig = [fig;figure(6)];
+imshow(map_campus.map);
+hold on;
+plot(trajectory.q(1,:)/k,trajectory.q(2,:)/k,'.-');
+plot(out.x.Data/k,out.y.Data/k,'.-');
+plot(out.x_colision/k,out.y_colision/k);
+legend('reference','trajectory','colisions');
+hold off;
+

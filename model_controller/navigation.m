@@ -10,9 +10,15 @@ classdef navigation < matlab.System
         r_gain=0.5;
         OffsetTime = 0.0 % Offset Time
         SampleTime = 0.1 % Sample Time
-        position_noise = 0.01;
-        orientation_noise = 0.01;
-        angular_speed_noise = 0.01;
+        position_noise = 0.1;
+        orientation_noise = 0.001;
+        angular_speed_noise = 0.001;
+        oc_matx = struct
+        d = 0.64;
+        L = 2.2;
+        Lr = 0.566;
+        Lf = 0.566;
+        k = 0.1852;
     end
 
     properties(DiscreteState)
@@ -31,8 +37,8 @@ classdef navigation < matlab.System
 
     % Pre-computed constants
     properties(Access = private)
-        L = 2.2;
-        d = 0.64;
+        %L = 2.2;
+        %d = 0.64;
         r = 0.256;
         A = eye(3);
     end
@@ -58,35 +64,54 @@ classdef navigation < matlab.System
 
         end
 
-        function [x,y,theta] = stepImpl(obj,theta_measured,omega_r,omega_l,x_real,y_real,GPS)
-            % Implement algorithm. Calculate y as a function of input u and
-            % discrete states.
+        function [x,y,theta,x_measured,y_measured,c_check,x_col,y_col,GPS] = stepImpl(obj,theta_measured,omega_r,omega_l,x_real,y_real,V)
+            % Navigation algorithm
             
-            
-            %% update omega_l, omega_r
+            %% Update omega_l, omega_r
             %omega_l = -obj.d*omega_s/obj.r+V/obj.r + randn(1)*b;
             %omega_r = 2*V/obj.r - omega_l + randn(1)*b;
             
-            omega_l_noise = omega_l + randn(1)*obj.angular_speed_noise;
-            omega_r_noise = omega_r + randn(1)*obj.angular_speed_noise;
+            %omega_l_noise = omega_l + randn(1)*obj.angular_speed_noise;
+            %omega_r_noise = omega_r + randn(1)*obj.angular_speed_noise;
+            
+            %% This was used to test the calculation of theta
+            
+            omega_l_noise = omega_l + randn(1)*0;
+            omega_r_noise = omega_r + randn(1)*0;
             omega_s = ((omega_r_noise - omega_l_noise)*obj.r)/(2*obj.d);
-
-            V = (omega_r_noise + omega_l_noise)*obj.r/2;
+            %theta_out = obj.prev_theta + omega_s*obj.SampleTime; 
+            %theta_out_t = obj.prev_theta + omega_s_t*obj.SampleTime;
+            
+            %% Control input
+            %V = (omega_r_noise + omega_l_noise)*obj.r/2;
             u_vec = [V; omega_s];
+            
+            %% Collision check
+            [c_check, x_col, y_col] = obj.collisions_check(x_real,y_real,theta_measured);
+            
+            
             %% obtain measurements
+            
+            GPS = obj.shadow_zones(x_real,y_real);
+            
             if GPS == 1
                 % with GPS and wheel odometry
                 [x_measured, y_measured, out1, out2] = obj.gps_estimation(x_real, y_real, x_real, y_real);
                 
                 theta_measured = theta_measured + obj.orientation_noise*randn(1);
-                %theta_measured = obj.prev_theta + omega_s*obj.SampleTime;      
+                %theta_measured = obj.prev_theta + omega_s_t*obj.SampleTime;  
             else
                 % w/o GPS, kinematic model and odometry
-                x_vec_meas = obj.A*obj.est_vec + obj.B_est*u_vec;
+                x_vec_meas = obj.A*obj.est_vec + obj.B_est*u_vec*obj.SampleTime;
                 x_measured = x_vec_meas(1);
                 y_measured = x_vec_meas(2);
                 
-                theta_measured = obj.prev_theta + omega_s*obj.SampleTime;
+                %theta_measured = obj.prev_theta + omega_s*obj.SampleTime; % ignore this theta
+               
+                
+                theta_measured = theta_measured + obj.orientation_noise*randn(1);
+                %theta_measured = obj.prev_theta + omega_s_t*obj.SampleTime;  
+            
             end
             
             %% EKF estimation
@@ -102,10 +127,79 @@ classdef navigation < matlab.System
             obj.prev_theta = theta;
         end
 
+        
+        
         function resetImpl(obj)
             % Initialize / reset discrete-state properties
         end
+        
+        
+        
+        
+        function [z] = shadow_zones(obj,x,y)
+            %% Shadow zones (no GPS)
+            
+            x_mat = x/obj.k;
+            y_mat = y/obj.k;
+            
+            if (obj.oc_matx.occ_matrix(round(y_mat),round(x_mat)) == 3)
+                z = 0;
+            else
+                z = 1;
+            end
+        end
+        
+        
+        
+        
+        function [c_check, x_col, y_col] = collisions_check(obj,x,y,theta)
+            c_mtx = [0;0;0;0];
+            
+            x_front_L = (x + (obj.L + obj.Lf)*cos(theta) - obj.d*sin(theta))/obj.k;
+            y_front_L = (y + (obj.L + obj.Lf)*sin(theta) + obj.d*cos(theta))/obj.k;
+            x_back_L = (x - ((obj.Lr)*cos(theta) + obj.d*sin(theta)))/obj.k;
+            y_back_L = (y - ((obj.Lr)*sin(theta) - obj.d*cos(theta)))/obj.k;
+            
+            
+            x_front_R = (x + (obj.L + obj.Lf)*cos(theta) + obj.d*sin(theta))/obj.k;
+            y_front_R = (y + (obj.L + obj.Lf)*sin(theta) - obj.d*cos(theta))/obj.k;
+            x_back_R = (x - ((obj.Lr)*cos(theta) - obj.d*sin(theta)))/obj.k;
+            y_back_R = (y - ((obj.Lr)*sin(theta) + obj.d*cos(theta)))/obj.k;
+    
+            
+            c_mtx = [obj.oc_matx.occ_matrix(round(y_front_L),round(x_front_L));
+                     obj.oc_matx.occ_matrix(round(y_front_R),round(x_front_R));
+                     obj.oc_matx.occ_matrix(round(y_back_L),round(x_back_L));
+                     obj.oc_matx.occ_matrix(round(y_back_R),round(x_back_R))];
+            
+            if (c_mtx(1) ~= 1 && c_mtx(2) ~= 1 && c_mtx(3) ~= 1 && c_mtx(4) ~= 1) % no collision 
+                c_check = 0;
+                x_col = NaN;
+                y_col = NaN;
+            elseif (c_mtx(1) == 1 && c_mtx(2) ~= 1 && c_mtx(3) ~= 1 && c_mtx(4) ~= 1) % collision front Left
+                c_check = 1;
+                x_col = x;
+                y_col = y;
+            elseif (c_mtx(1) ~= 1 && c_mtx(2) == 1 && c_mtx(3) ~= 1 && c_mtx(4) ~= 1) % collision front Right
+                c_check = 2;
+                x_col = x;
+                y_col = y;
+            elseif (c_mtx(1) ~= 1 && c_mtx(2) ~= 1 && c_mtx(3) == 1 && c_mtx(4) ~= 1) % collision back Left
+                c_check = 3;
+                x_col = x;
+                y_col = y;
+            elseif (c_mtx(1) ~= 1 && c_mtx(2) ~= 1 && c_mtx(3) ~= 1 && c_mtx(4) == 1) % collision back Right
+                c_check = 4;
+                x_col = x;
+                y_col = y;
+            else % multiple collisions
+                c_check = 5;
+                x_col = x;
+                y_col = y;
+            end
+        end
 
+        
         function [x_est,y_est,x_real,y_real] = gps_estimation(obj,x,y,x_r,y_r)
             %noise_x = (-1) + (1-(-1))*rand();
             %noise_y = (-1) + (1-(-1))*rand();
@@ -117,7 +211,8 @@ classdef navigation < matlab.System
             x_real = x_r;
             y_real = y_r;
         end
-
+        
+        
         function [x,y,theta,P] = ekf_2w(obj,x_prev,y_prev,theta_prev,V,omega_s, L, P, x_measured, y_measured, theta_measured, Q, R)
             x_prev_vec = [x_prev; y_prev; theta_prev];
             u_vec = [V; omega_s];

@@ -13,30 +13,29 @@ R = 0.688; % resistance
 
 Kt = 11.43; % torque constant
 Kb = 0.06; % back emf constant
-
+B = 0.05;
 J = 0.0025; % momento de inercia
 
 % PID 
 %kp = 50;
 %ki = 100;
-kp = 50;
+kp = 70;
 ki = 100;
 %ki = 50;
 %kp = 100;
 %ki = 0;
 kd = 0;
-N = 0;
+N = 1000;
+
+P0 = 20;
+
+threshold = 0.09;
 
 trajectory = load('traj_maluca.mat');
 T = trajectory.tSamples(2);
-%{
-trajectory.q = trajectory.q(:,50:end);
-trajectory.qd = trajectory.qd(:,50:end);
-trajectory.qdd = trajectory.qdd(:,50:end);
-trajectory.tSamples = trajectory.tSamples(:,50:end);
-%}
-x_final = trajectory.q(1,end)
-y_final = trajectory.q(2,end)
+
+x_final = trajectory.q(1,end);
+y_final = trajectory.q(2,end);
 
 
 cont = kin_controller(trajectory);
@@ -64,17 +63,8 @@ x_init = trajectory.q(1,1);
 y_init = trajectory.q(2,1);
 
 
-position_noise_mean = 2;
-position_noise_variance = 0.5;
-angular_speed_noise_mean = 0.001;
-angular_speed_noise_variance = 0.5;
-theta_noise_mean = 0.001;
-theta_noise_variance = 0.001;
 
-NoiseSampleTime = 0.00001;
+Energy_budget = 1000*input("Define the energy budget(Kj): ");
 
-seed1 = 1;
-seed2 = 2;
-seed3 = 3;
-seed4 = 4;
-seed5 = 5;
+k = 0.1852;
+oc_matx = open('oc_matrix.mat');
