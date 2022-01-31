@@ -157,7 +157,7 @@ classdef kin_controller < matlab.System
         function u = feedback_vel(obj,omegad,vd,err)
             % Uses err to get a better estimate of the linear and angular velocities 
             Zeta = 0.99;
-            g = 32*0.0005;
+            g = 64*0.0005;
             %g = 0;
             omega_n = sqrt(omegad^2 + g*vd^2);
             k1 = 2*Zeta*omega_n;
